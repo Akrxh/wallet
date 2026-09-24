@@ -172,7 +172,7 @@ function buildNav(){
 }
 $("#collapse").onclick=()=>document.body.classList.toggle("collapsed");
 $("#menu").onclick=()=>{document.body.classList.toggle("open");syncScrim()};
-function syncScrim(){document.querySelectorAll(".scrim").forEach(s=>s.remove());if(document.body.classList.contains("open")){const s=document.createElement("div");s.className="scrim";s.onclick=()=>{document.body.classList.remove("open");s.remove()};document.body.append(s)}}
+function syncScrim(){document.querySelectorAll(".scrim").forEach(s=>s.remove());if(document.body.classList.contains("open")){const s=document.createElement("div");s.className="scrim";s.onclick=()=>{document.body.classList.remove("open");s.remove()};$("#app").append(s)}}
 function go(p){
  page=p;document.body.classList.remove("open");syncScrim();
  document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.p==p));
