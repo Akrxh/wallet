@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wallet</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0709;--panel:#1a0f12;--panel2:#241418;--line:#3a2226;--gold:#ffb347;--amber:#ff8a2a;--crimson:#c8202f;--text:#f6e9dc;--mute:#a8917f;--ok:#7fd68a;--glow:0 0 18px rgba(255,138,42,.35);--r:14px}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;
+background-image:radial-gradient(ellipse at 20% 0%,rgba(255,138,42,.16),transparent 55%),radial-gradient(ellipse at 90% 100%,rgba(200,32,47,.18),transparent 50%),
+repeating-linear-gradient(0deg,transparent 0 47px,rgba(255,179,71,.05) 47px 48px),repeating-linear-gradient(90deg,transparent 0 47px,rgba(255,179,71,.05) 47px 48px);background-attachment:fixed}
+h1,h2,h3,.brand{font-family:Cinzel,Georgia,serif;letter-spacing:.06em}
+button,input,select{font:inherit;color:inherit}
+.hidden{display:none!important}
+/* buttons/inputs */
+.btn{background:linear-gradient(135deg,var(--amber),var(--crimson));border:0;border-radius:10px;padding:.7rem 1.1rem;font-weight:600;cursor:pointer;color:#fff;box-shadow:var(--glow);transition:.25s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 0 28px rgba(255,138,42,.6)}
+.btn.ghost{background:transparent;border:1px solid var(--line);box-shadow:none}
+.btn.ghost:hover{border-color:var(--gold);color:var(--gold)}
+.btn.sm{padding:.4rem .7rem;font-size:.8rem}
+input,select{width:100%;background:#120a0c;border:1px solid var(--line);border-radius:10px;padding:.7rem .85rem;outline:0;transition:.2s;font-size:16px}
+input:focus,select:focus{border-color:var(--gold);box-shadow:var(--glow)}
+label{display:block;font-size:.75rem;color:var(--mute);margin:.8rem 0 .3rem;text-transform:uppercase;letter-spacing:.1em}
+/* auth */
+#auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+.card{background:linear-gradient(160deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:var(--r);padding:1.2rem;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.authbox{width:100%;max-width:380px;padding:2rem 1.5rem;text-align:center;box-shadow:0 0 60px rgba(255,138,42,.18)}
+.authbox h1{font-size:1.6rem;color:var(--gold);text-shadow:0 0 16px rgba(255,138,42,.6)}
+.authbox p.sub{color:var(--mute);font-size:.85rem;margin:.3rem 0 1rem}
+.authbox form{text-align:left}.authbox .btn{width:100%;margin-top:1.2rem}
+.tabs{display:flex;gap:.4rem;margin:1rem 0 .2rem}.tabs button{flex:1;background:none;border:0;border-bottom:2px solid var(--line);padding:.5rem;color:var(--mute);cursor:pointer}
+.tabs button.on{color:var(--gold);border-color:var(--gold)}
+.err{color:#ff7b7b;font-size:.85rem;min-height:1.2rem;margin-top:.6rem}
+.lantern{position:fixed;width:10px;height:10px;border-radius:50%;background:var(--gold);box-shadow:0 0 20px 8px rgba(255,138,42,.5);animation:float 9s ease-in-out infinite;pointer-events:none;opacity:.6;z-index:0}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-40px)}}
+/* layout */
+#app{display:flex;min-height:100vh;position:relative;z-index:1}
+aside{width:236px;background:rgba(20,10,13,.94);border-right:1px solid var(--line);padding:1rem .8rem;display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:30;transition:.3s;backdrop-filter:blur(8px)}
+.brand{color:var(--gold);font-size:1.1rem;padding:.5rem .6rem 1.2rem;text-shadow:0 0 12px rgba(255,138,42,.6);white-space:nowrap}
+nav button{display:flex;align-items:center;gap:.8rem;width:100%;background:none;border:0;padding:.8rem;border-radius:10px;cursor:pointer;color:var(--mute);margin-bottom:.2rem;text-align:left;transition:.2s;white-space:nowrap}
+nav button:hover{background:var(--panel2);color:var(--text)}
+nav button.on{background:linear-gradient(90deg,rgba(255,138,42,.22),transparent);color:var(--gold);box-shadow:inset 3px 0 var(--amber)}
+nav .ic{font-size:1.15rem;width:1.4rem;text-align:center}
+.spacer{flex:1}
+main{flex:1;margin-left:236px;padding:1rem 1.2rem 5rem;min-width:0;transition:.3s}
+body.collapsed aside{width:68px}body.collapsed main{margin-left:68px}
+body.collapsed .lbl,body.collapsed .brand span{display:none}
+header.top{display:flex;align-items:center;gap:.8rem;margin-bottom:1rem}
+header.top h2{flex:1;font-size:1.3rem;color:var(--gold)}
+.menu{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:.5rem .7rem;cursor:pointer}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20}
+@media(max-width:860px){aside{transform:translateX(-100%);width:236px!important}body.open aside{transform:none}main{margin-left:0!important}body.collapsed .lbl{display:inline!important}}
+/* grid */
+.grid{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin-bottom:.9rem}
+.stat small{color:var(--mute);text-transform:uppercase;letter-spacing:.1em;font-size:.7rem}
+.stat .v{font-size:1.6rem;font-weight:600;margin-top:.3rem;word-break:break-all}
+.gold{color:var(--gold);text-shadow:0 0 14px rgba(255,138,42,.45)}.ok{color:var(--ok)}.bad{color:#ff7b7b}
+.bar{height:10px;background:#120a0c;border-radius:9px;overflow:hidden;margin:.5rem 0;border:1px solid var(--line)}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--amber));box-shadow:var(--glow);transition:width .8s;border-radius:9px}
+.bar i.over{background:linear-gradient(90deg,var(--amber),var(--crimson))}
+.row{display:flex;justify-content:space-between;align-items:center;gap:.6rem}
+.tx{display:flex;align-items:center;gap:.8rem;padding:.75rem 0;border-bottom:1px solid var(--line)}
+.tx:last-child{border:0}.tx .dot{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--panel);border:1px solid var(--line);flex:none}
+.tx .meta{flex:1;min-width:0}.tx .meta b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}.tx .meta small{color:var(--mute)}
+.filters{display:grid;gap:.6rem;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin-bottom:.9rem}
+.filters label{margin:0 0 .2rem}
+.fab{position:fixed;right:1.2rem;bottom:calc(1.2rem + env(safe-area-inset-bottom,0px));width:56px;height:56px;border-radius:50%;font-size:1.8rem;z-index:15;padding:0}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:1rem;z-index:50}
+.modal .card{width:100%;max-width:400px;max-height:92vh;overflow:auto}
+.seg{display:flex;gap:.4rem}.seg button{flex:1}
+.toast{position:fixed;left:50%;bottom:1.5rem;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--gold);padding:.6rem 1rem;border-radius:10px;z-index:99;box-shadow:var(--glow);font-size:.9rem}
+.view{animation:fade .35s}@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
+.empty{color:var(--mute);text-align:center;padding:1.5rem}
+h3{font-size:1rem;margin-bottom:.6rem;color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="lantern" style="top:12%;left:8%"></div><div class="lantern" style="top:30%;right:10%;animation-delay:2s"></div><div class="lantern" style="bottom:15%;left:20%;animation-delay:4s"></div>
+
+<div id="auth">
+ <div class="card authbox">
+  <h1 id="ttl">Wallet</h1><p class="sub">made with love by Tryin'</p>
+  <div class="tabs"><button id="tLogin" class="on">Login</button><button id="tSign">Sign up</button></div>
+  <form id="af">
+   <label>Username</label><input id="u" autocomplete="username" autocapitalize="none" required>
+   <label>Password</label><input id="p" type="password" autocomplete="current-password" required minlength="4">
+   <div class="err" id="err"></div>
+   <button class="btn" id="go">Login</button>
+  </form>
+ </div>
+</div>
+
+<div id="app" class="hidden">
+ <aside>
+  <div class="brand">🏮 <span>WALLET</span></div>
+  <nav id="nav"></nav>
+  <div class="spacer"></div>
+  <nav><button id="collapse"><span class="ic">⇔</span><span class="lbl">Collapse</span></button><button id="logout"><span class="ic">⎋</span><span class="lbl">Logout</span></button></nav>
+ </aside>
+ <main>
+  <header class="top"><button class="menu" id="menu">☰</button><h2 id="title"></h2><span id="who" style="color:var(--mute);font-size:.85rem"></span></header>
+  <div id="view" class="view"></div>
+ </main>
+ <button class="btn fab" id="fab">+</button>
+</div>
+<div id="modal"></div>
+
+<script>
+const DB="https://wallet-sidpersonal-default-rtdb.asia-southeast1.firebasedatabase.app/";
+const FORM="https://forms.gle/45JK1QnGBwLDWBq48";
+const CATS=["Food","Transport","Shopping","Bills","Health","Fun","Other"];
+const INC=["Salary","Gift","Other Income"];
+const ICON={Food:"🍜",Transport:"🚆",Shopping:"🛍️",Bills:"💡",Health:"💊",Fun:"🎎",Other:"📦",Salary:"💰",Gift:"🎁","Other Income":"✨"};
+const PAGES=[["dash","🏯","Dashboard"],["hist","📜","History"],["plan","🎯","Budget Planner"],["set","⚙️","Settings"],["help","❓","Help"]];
+let user=null,D=null,page="dash",F={type:"",cat:"",month:"",q:""};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt=n=>D.cur+(+n).toLocaleString(undefined,{maximumFractionDigits:2});
+const mKey=d=>d.slice(0,7), now=()=>new Date().toISOString().slice(0,10);
+function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.append(t);setTimeout(()=>t.remove(),2400)}
+
+/* ---------- Firebase REST ---------- */
+async function db(path,method="GET",body){
+ const r=await fetch(DB+path+".json",{method,headers:{"Content-Type":"application/json"},body:body===undefined?undefined:JSON.stringify(body)});
+ if(!r.ok)throw new Error("DB "+r.status);return r.json();
+}
+async function hash(pw,salt){
+ const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(salt+":"+pw));
+ return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");
+}
+const save=()=>db(`users/${user}/data`,"PUT",D).catch(()=>toast("Sync failed – check connection"));
+
+/* ---------- Auth ---------- */
+let mode="login";
+$("#tLogin").onclick=()=>setMode("login");$("#tSign").onclick=()=>setMode("sign");
+function setMode(m){mode=m;$("#tLogin").classList.toggle("on",m=="login");$("#tSign").classList.toggle("on",m=="sign");$("#go").textContent=m=="login"?"Login":"Sign up";$("#p").autocomplete=m=="login"?"current-password":"new-password";$("#err").textContent=""}
+$("#af").onsubmit=async e=>{
+ e.preventDefault();const err=$("#err");err.textContent="";
+ const u=$("#u").value.trim().toLowerCase(),p=$("#p").value;
+ if(!/^[a-z0-9_]{3,20}$/.test(u)){err.textContent="Username: 3–20 letters, numbers or _";return}
+ $("#go").disabled=true;
+ try{
+  const auth=await db(`users/${u}/auth`);
+  if(mode=="sign"){
+   if(auth){err.textContent="Username already taken";return}
+   const salt=crypto.getRandomValues(new Uint32Array(4)).join("-");
+   await db(`users/${u}/auth`,"PUT",{salt,hash:await hash(p,salt)});
+   user=u;D=defaults();await save();
+  }else{
+   if(!auth||auth.hash!==await hash(p,auth.salt)){err.textContent="Invalid username or password";return}
+   user=u;const d=await db(`users/${u}/data`);D=Object.assign(defaults(),d||{});D.tx=D.tx||{};D.cats=D.cats||{};
+  }
+  sessionStorage.setItem("iw_user",user);start();
+ }catch(x){err.textContent="Connection error. Try again."}
+ finally{$("#go").disabled=false}
+};
+function defaults(){return{cur:"₹",budget:0,cats:{},goal:{name:"",target:0,saved:0},tx:{}}}
+async function resume(){
+ const u=sessionStorage.getItem("iw_user");if(!u)return;
+ try{const d=await db(`users/${u}/data`);user=u;D=Object.assign(defaults(),d||{});D.tx=D.tx||{};D.cats=D.cats||{};start()}catch(e){}
+}
+$("#logout").onclick=()=>{sessionStorage.removeItem("iw_user");location.reload()};
+function start(){$("#auth").classList.add("hidden");$("#app").classList.remove("hidden");$("#who").textContent="@"+user;buildNav();go("dash")}
+
+/* ---------- Nav ---------- */
+function buildNav(){
+ $("#nav").innerHTML=PAGES.map(([id,ic,l])=>`<button data-p="${id}"><span class="ic">${ic}</span><span class="lbl">${l}</span></button>`).join("");
+ $("#nav").onclick=e=>{const b=e.target.closest("button");if(b)go(b.dataset.p)};
+}
+$("#collapse").onclick=()=>document.body.classList.toggle("collapsed");
+$("#menu").onclick=()=>{document.body.classList.toggle("open");syncScrim()};
+function syncScrim(){document.querySelectorAll(".scrim").forEach(s=>s.remove());if(document.body.classList.contains("open")){const s=document.createElement("div");s.className="scrim";s.onclick=()=>{document.body.classList.remove("open");s.remove()};document.body.append(s)}}
+function go(p){
+ page=p;document.body.classList.remove("open");syncScrim();
+ document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.p==p));
+ $("#title").textContent=PAGES.find(x=>x[0]==p)[2];
+ $("#fab").classList.toggle("hidden",p=="help"||p=="set");
+ render();
+}
+function render(){
+ const v=$("#view");v.style.animation="none";v.offsetHeight;v.style.animation="";
+ v.innerHTML=({dash:vDash,hist:vHist,plan:vPlan,set:vSet,help:vHelp})[page]();
+ if(page=="hist")bindHist();if(page=="plan")bindPlan();if(page=="set")bindSet();
+}
+
+/* ---------- Calculations ---------- */
+const list=()=>Object.entries(D.tx).map(([id,t])=>({id,...t})).sort((a,b)=>b.date.localeCompare(a.date)||b.ts-a.ts);
+function stats(){
+ const m=mKey(now());let inc=0,exp=0,mi=0,me=0;const byCat={};
+ list().forEach(t=>{const a=+t.amount;if(t.type=="inc"){inc+=a;if(mKey(t.date)==m)mi+=a}else{exp+=a;if(mKey(t.date)==m){me+=a;byCat[t.cat]=(byCat[t.cat]||0)+a}}});
+ return{bal:inc-exp,mi,me,byCat,left:D.budget-me,pct:D.budget>0?me/D.budget*100:0};
+}
+const bar=p=>`<div class="bar"><i class="${p>100?"over":""}" style="width:${Math.min(100,p)}%"></i></div>`;
+function txRow(t,del){return`<div class="tx"><div class="dot">${ICON[t.cat]||"•"}</div><div class="meta"><b>${esc(t.note||t.cat)}</b><small>${esc(t.cat)} · ${t.date}</small></div><b class="${t.type=="inc"?"ok":"bad"}">${t.type=="inc"?"+":"−"}${fmt(t.amount)}</b>${del?`<button class="btn ghost sm" data-del="${t.id}">✕</button>`:""}</div>`}
+
+/* ---------- Views ---------- */
+function vDash(){
+ const s=stats(),r=list().slice(0,5);
+ const cats=Object.entries(s.byCat).sort((a,b)=>b[1]-a[1]);
+ return`<div class="grid">
+ <div class="card stat"><small>Total Balance</small><div class="v gold">${fmt(s.bal)}</div></div>
+ <div class="card stat"><small>Income this month</small><div class="v ok">${fmt(s.mi)}</div></div>
+ <div class="card stat"><small>Spent this month</small><div class="v bad">${fmt(s.me)}</div></div></div>
+ <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(290px,1fr))">
+ <div class="card"><h3>Monthly Budget</h3>${D.budget>0?`<div class="row"><span>${s.pct.toFixed(1)}% spent</span><span class="${s.left<0?"bad":"ok"}">${s.left<0?"Over by "+fmt(-s.left):fmt(s.left)+" left"}</span></div>${bar(s.pct)}<small style="color:var(--mute)">${fmt(s.me)} of ${fmt(D.budget)}</small>`:`<p class="empty">No budget set yet.<br><button class="btn sm" style="margin-top:.8rem" onclick="go('plan')">Set budget</button></p>`}
+ ${cats.length?"<h3 style='margin-top:1rem'>Where it went</h3>"+cats.map(([c,a])=>`<div class="row"><small>${ICON[c]} ${c}</small><small>${fmt(a)}</small></div>${bar(s.me?a/s.me*100:0)}`).join(""):""}</div>
+ <div class="card"><h3>Recent</h3>${r.length?r.map(t=>txRow(t)).join(""):'<p class="empty">No transactions yet. Tap + to add.</p>'}</div></div>`;
+}
+function vHist(){
+ const ms=[...new Set(list().map(t=>mKey(t.date)))];
+ return`<div class="card"><div class="filters">
+ <div><label>Search</label><input id="fq" value="${esc(F.q)}" placeholder="Note…"></div>
+ <div><label>Type</label><select id="ft"><option value="">All</option><option value="inc">Income</option><option value="exp">Expense</option></select></div>
+ <div><label>Category</label><select id="fc"><option value="">All</option>${[...CATS,...INC].map(c=>`<option>${c}</option>`).join("")}</select></div>
+ <div><label>Month</label><select id="fm"><option value="">All</option>${ms.map(m=>`<option>${m}</option>`).join("")}</select></div></div>
+ <div id="hl"></div></div>`;
+}
+function bindHist(){
+ $("#ft").value=F.type;$("#fc").value=F.cat;$("#fm").value=F.month;
+ const draw=()=>{
+  F={q:$("#fq").value,type:$("#ft").value,cat:$("#fc").value,month:$("#fm").value};
+  const l=list().filter(t=>(!F.type||t.type==F.type)&&(!F.cat||t.cat==F.cat)&&(!F.month||mKey(t.date)==F.month)&&(!F.q||(t.note||"").toLowerCase().includes(F.q.toLowerCase())));
+  const tot=l.reduce((a,t)=>a+(t.type=="inc"?1:-1)*t.amount,0);
+  $("#hl").innerHTML=l.length?l.map(t=>txRow(t,true)).join("")+`<div class="row" style="padding-top:.8rem"><small>${l.length} entries</small><b class="${tot<0?"bad":"ok"}">Net ${fmt(tot)}</b></div>`:'<p class="empty">Nothing matches.</p>';
+ };
+ ["fq","ft","fc","fm"].forEach(i=>$("#"+i).oninput=draw);draw();
+ $("#hl").onclick=e=>{const b=e.target.closest("[data-del]");if(b&&confirm("Delete this transaction?")){delete D.tx[b.dataset.del];save();draw()}};
+}
+function vPlan(){
+ const s=stats(),g=D.goal,gp=g.target>0?g.saved/g.target*100:0,alloc=Object.values(D.cats).reduce((a,b)=>a+ +b,0);
+ return`<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(290px,1fr))">
+ <div class="card"><h3>Monthly Limit</h3><label>Total budget (${D.cur})</label><input id="bud" type="number" inputmode="decimal" min="0" value="${D.budget||""}">
+ <button class="btn" id="sb" style="margin-top:1rem;width:100%">Save budget</button>
+ ${D.budget>0?`<div style="margin-top:1rem" class="row"><small>Spent</small><small>${fmt(s.me)} (${s.pct.toFixed(1)}%)</small></div>${bar(s.pct)}<div class="row"><small>Remaining</small><b class="${s.left<0?"bad":"ok"}">${fmt(s.left)}</b></div><div class="row"><small>Per day left</small><small>${fmt(Math.max(0,s.left)/Math.max(1,new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate()-new Date().getDate()+1))}</small></div>`:""}</div>
+ <div class="card"><h3>Category Limits</h3>${CATS.map(c=>{const sp=s.byCat[c]||0,l=+D.cats[c]||0;return`<div class="row"><small>${ICON[c]} ${c}</small><input data-c="${c}" type="number" inputmode="decimal" min="0" placeholder="limit" value="${l||""}" style="width:110px;padding:.4rem"></div>${l?bar(sp/l*100)+`<small style="color:var(--mute)">${fmt(sp)} / ${fmt(l)}</small>`:'<div style="height:.6rem"></div>'}`}).join("")}
+ <small style="color:var(--mute)">Allocated: ${fmt(alloc)}${D.budget?` · Unassigned: ${fmt(D.budget-alloc)}`:""}</small></div>
+ <div class="card"><h3>Savings Goal</h3><label>Goal name</label><input id="gn" value="${esc(g.name)}" placeholder="e.g. New laptop">
+ <label>Target (${D.cur})</label><input id="gt" type="number" inputmode="decimal" min="0" value="${g.target||""}">
+ <button class="btn ghost" id="sg" style="margin-top:.8rem;width:100%">Save goal</button>
+ ${g.target>0?`<div style="margin-top:1rem" class="row"><b>${esc(g.name||"Goal")}</b><small>${gp.toFixed(1)}%</small></div>${bar(gp)}<div class="row"><small>${fmt(g.saved)} saved</small><small>${fmt(Math.max(0,g.target-g.saved))} to go</small></div>
+ <div class="row" style="margin-top:.8rem"><input id="ga" type="number" inputmode="decimal" placeholder="Amount"><button class="btn sm" id="ad">Add</button><button class="btn ghost sm" id="rm">Withdraw</button></div>`:""}</div></div>`;
+}
+function bindPlan(){
+ $("#sb").onclick=()=>{D.budget=Math.max(0,+$("#bud").value||0);save();toast("Budget saved");render()};
+ document.querySelectorAll("[data-c]").forEach(i=>i.onchange=()=>{const v=+i.value||0;if(v>0)D.cats[i.dataset.c]=v;else delete D.cats[i.dataset.c];save();render()});
+ $("#sg").onclick=()=>{D.goal.name=$("#gn").value.trim();D.goal.target=Math.max(0,+$("#gt").value||0);save();toast("Goal saved");render()};
+ if($("#ad")){const ch=k=>{const a=+$("#ga").value;if(a>0){D.goal.saved=Math.max(0,D.goal.saved+k*a);save();render()}};$("#ad").onclick=()=>ch(1);$("#rm").onclick=()=>ch(-1)}
+}
+function vSet(){return`<div class="card" style="max-width:480px"><h3>Preferences</h3><label>Currency symbol</label><select id="cur">${["₹","$","€","£","¥"].map(c=>`<option ${c==D.cur?"selected":""}>${c}</option>`).join("")}</select>
+ <label>Data</label><div class="row" style="gap:.5rem"><button class="btn ghost" id="ex" style="flex:1">Export JSON</button><button class="btn ghost" id="cl" style="flex:1">Clear transactions</button></div>
+ <label>Account</label><small style="color:var(--mute)">Signed in as @${esc(user)}</small></div>`}
+function bindSet(){
+ $("#cur").onchange=e=>{D.cur=e.target.value;save();toast("Currency updated")};
+ $("#ex").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(D,null,2)],{type:"application/json"}));a.download="wallet-"+user+".json";a.click()};
+ $("#cl").onclick=()=>{if(confirm("Delete ALL transactions? This cannot be undone.")){D.tx={};save();toast("Cleared")}};
+}
+function vHelp(){return`<div class="card" style="max-width:560px"><h3>Help &amp; Support</h3>
+ <p style="color:var(--mute);line-height:1.6;margin-bottom:1rem">Found a bug or need a hand? Send us a note via the support form. Quick tips: tap <b class="gold">+</b> to log income or an expense, set limits in the Budget Planner, and filter your past entries in History.</p>
+ <a class="btn" style="display:inline-block;text-decoration:none" href="${FORM}" target="_blank" rel="noopener">Open Support Form ↗</a></div>`}
+
+/* ---------- Add transaction ---------- */
+$("#fab").onclick=()=>{
+ let type="exp";
+ const m=$("#modal");
+ const opts=t=>(t=="exp"?CATS:INC).map(c=>`<option>${c}</option>`).join("");
+ m.innerHTML=`<div class="modal"><div class="card"><h3>New Transaction</h3>
+ <div class="seg"><button class="btn sm" data-t="exp">Expense</button><button class="btn ghost sm" data-t="inc">Income</button></div>
+ <label>Amount (${D.cur})</label><input id="ta" type="number" inputmode="decimal" min="0" step="0.01">
+ <label>Category</label><select id="tc">${opts("exp")}</select>
+ <label>Note</label><input id="tn" maxlength="60">
+ <label>Date</label><input id="td" type="date" value="${now()}">
+ <div class="row" style="margin-top:1.2rem;gap:.6rem"><button class="btn ghost" id="tx">Cancel</button><button class="btn" id="tv" style="flex:1">Save</button></div></div></div>`;
+ m.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{type=b.dataset.t;m.querySelectorAll("[data-t]").forEach(x=>x.className="btn sm"+(x==b?"":" ghost"));$("#tc").innerHTML=opts(type)});
+ $("#tx").onclick=()=>m.innerHTML="";
+ $("#tv").onclick=()=>{
+  const a=+$("#ta").value;if(!(a>0))return toast("Enter a valid amount");
+  const id="t"+Date.now().toString(36);
+  D.tx[id]={type,amount:a,cat:$("#tc").value,note:$("#tn").value.trim(),date:$("#td").value||now(),ts:Date.now()};
+  save();m.innerHTML="";toast("Saved");render();
+ };
+};
+/* ---------- Hidden admin (tap the title 5 times on the login screen) ---------- */
+const ADMIN_HASH="2b7ca533d8a8ac5765bfbec8f954eae9c7c5afaae155e4e105b7545750a5763e";
+let taps=0,tapT;
+$("#ttl").onclick=()=>{
+ taps++;clearTimeout(tapT);tapT=setTimeout(()=>taps=0,2000);
+ if(taps<5)return;taps=0;
+ $("#modal").innerHTML=`<div class="modal"><div class="card"><h3>Admin</h3><label>Password</label><input id="ap" type="password" autocomplete="off">
+ <div class="err" id="ae"></div><div class="row" style="margin-top:1rem;gap:.6rem"><button class="btn ghost" id="ax">Cancel</button><button class="btn" id="ag" style="flex:1">Open</button></div></div></div>`;
+ $("#ax").onclick=()=>$("#modal").innerHTML="";
+ $("#ag").onclick=async()=>{
+  if(await hash($("#ap").value,"admin")!==ADMIN_HASH){$("#ae").textContent="Wrong password";return}
+  adminPanel();
+ };
+};
+async function adminPanel(){
+ const m=$("#modal");
+ m.innerHTML=`<div class="modal"><div class="card" style="max-width:460px"><div class="row"><h3>Users</h3><button class="btn ghost sm" id="ax">Close</button></div><div id="al"><p class="empty">Loading…</p></div></div></div>`;
+ $("#ax").onclick=()=>m.innerHTML="";
+ let ks;
+ try{const r=await fetch(DB+"users.json?shallow=true");ks=Object.keys(await r.json()||{}).sort()}catch(e){$("#al").innerHTML='<p class="empty">Connection error</p>';return}
+ $("#al").innerHTML=ks.length?ks.map(k=>`<div class="tx"><div class="meta"><b>@${esc(k)}</b></div><button class="btn ghost sm" data-r="${esc(k)}">Password</button><button class="btn ghost sm" data-d="${esc(k)}">Remove</button></div>`).join(""):'<p class="empty">No users.</p>';
+ $("#al").onclick=async e=>{
+  const r=e.target.closest("[data-r]"),d=e.target.closest("[data-d]");
+  try{
+   if(r){const p=prompt("New password for @"+r.dataset.r+" (min 4 characters)");if(!p||p.length<4)return;
+    const salt=crypto.getRandomValues(new Uint32Array(4)).join("-");
+    await db(`users/${r.dataset.r}/auth`,"PUT",{salt,hash:await hash(p,salt)});toast("Password updated")}
+   if(d&&confirm("Remove @"+d.dataset.d+" and all their data?")){await db(`users/${d.dataset.d}`,"DELETE");toast("Account removed");adminPanel()}
+  }catch(x){toast("Action failed")}
+ };
+}
+resume();
+</script>
+</body>
+</html>
